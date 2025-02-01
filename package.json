@@ -6,10 +6,15 @@
     "name": "James McComish",
     "url": "https://github.com/jamesmccomish"
   },
+  "dependencies": {
+    "@prb/math": "^4.1.0"
+  },
   "devDependencies": {
+    "@types/node": "^22.13.0",
     "forge-std": "github:foundry-rs/forge-std#v1.8.1",
     "prettier": "^3.0.0",
-    "solhint": "^3.6.2"
+    "solhint": "^3.6.2",
+    "viem": "^2.22.17"
   },
   "keywords": [
     "blockchain",

@@ -12,6 +12,14 @@ script = "script"
 solc = "0.8.28"
 src = "src"
 test = "tests"
+lib = "node_modules"
+libs = ["lib"]
+remappings = [
+    "prb-math/=node_modules/@prb/math/src/",
+    "forge-std/=node_modules/forge-std/src/",
+    "@src/=src/",
+    "@test/=tests/"
+]
 
 [profile.ci]
 fuzz = { runs = 10_000 }
@@ -41,5 +49,3 @@ mainnet = "https://eth-mainnet.g.alchemy.com/v2/${API_KEY_ALCHEMY}"
 optimism = "https://optimism-rpc.publicnode.com"
 polygon = "https://polygon-bor-rpc.publicnode.com"
 sepolia = "https://ethereum-sepolia-rpc.publicnode.com"
-
-remappings = ["forge-std/=node_modules/forge-std/"]
