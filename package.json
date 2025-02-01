@@ -1,13 +1,10 @@
 {
-  "name": "@prb/foundry-template",
-  "description": "Foundry-based template for developing Solidity smart contracts",
-  "version": "1.0.0",
+  "name": "pdf-lib-sol",
+  "description": "A library for Probability Density Functions in Solidity",
+  "version": "0.0.1",
   "author": {
-    "name": "Paul Razvan Berg",
-    "url": "https://github.com/PaulRBerg"
-  },
-  "dependencies": {
-    "@openzeppelin/contracts": "^5.0.1"
+    "name": "James McComish",
+    "url": "https://github.com/jamesmccomish"
   },
   "devDependencies": {
     "forge-std": "github:foundry-rs/forge-std#v1.8.1",
@@ -17,11 +14,10 @@
   "keywords": [
     "blockchain",
     "ethereum",
-    "forge",
-    "foundry",
     "smart-contracts",
     "solidity",
-    "template"
+    "probability",
+    "pdf"
   ],
   "private": true,
   "scripts": {
