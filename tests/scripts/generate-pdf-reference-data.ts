@@ -122,6 +122,7 @@ function encodePdfTestData(pdfTestData: any) {
 
   return encodeAbiParameters(
     params,
+    // @ts-ignore
     [[pdfTestData.curve1, pdfTestData.curve2, pdfTestData.differenceExtrema, pdfTestData.x]]
   )
 }
