@@ -26,6 +26,9 @@ library PdfLib {
         MAXIMUM
     }
 
+    // TODO
+    SD59x18 internal constant FIRST_DERIVATIVE_TOLERANCE = SD59x18.wrap(1e12);
+
     SD59x18 internal constant TWO = SD59x18.wrap(2e18);
     SD59x18 internal constant PI = SD59x18.wrap(3_141_592_653_589_793_238);
     SD59x18 internal constant SQRT_2PI = SD59x18.wrap(2_506_628_274_631_000_502);
@@ -113,24 +116,24 @@ library PdfLib {
 
         // -(x - µ)^2
         SD59x18 xMinusMean = x - mean;
-        console2.log("xMinusMean", xMinusMean.unwrap());
+        // console2.log("xMinusMean", xMinusMean.unwrap());
         SD59x18 xMinusMeanSquared = xMinusMean.mul(xMinusMean);
-        console2.log("xMinusMeanSquared", xMinusMeanSquared.unwrap());
+        // console2.log("xMinusMeanSquared", xMinusMeanSquared.unwrap());
         SD59x18 exponentNumerator = -xMinusMeanSquared;
-        console2.log("exponentNumerator", exponentNumerator.unwrap());
+        // console2.log("exponentNumerator", exponentNumerator.unwrap());
         // 2σ^2
         SD59x18 exponentDenominator = TWO.mul(sigma.mul(sigma));
-        console2.log("exponentDenominator", exponentDenominator.unwrap());
+        // console2.log("exponentDenominator", exponentDenominator.unwrap());
         SD59x18 exponentFull = exponentNumerator.div(exponentDenominator);
-        console2.log("exponentFull", exponentFull.unwrap());
+        // console2.log("exponentFull", exponentFull.unwrap());
         // e^((-(x - µ)^2) / 2σ^2)
         SD59x18 exponentResult = exp(exponentFull);
-        console2.log("exponentResult", exponentResult.unwrap());
+        // console2.log("exponentResult", exponentResult.unwrap());
         // (1 / σ√2π)
         SD59x18 coDenominator = sigma.mul(SQRT_2PI);
-        console2.log("coDenominator", coDenominator.unwrap());
+        // console2.log("coDenominator", coDenominator.unwrap());
         SD59x18 coefficient = inv(coDenominator);
-        console2.log("coefficient", coefficient.unwrap());
+        // console2.log("coefficient", coefficient.unwrap());
 
         // p = (1 / σ√2π)e^((-(x - µ)^2) / 2σ^2)
         p = mul(coefficient, exponentResult);
@@ -151,16 +154,16 @@ library PdfLib {
         console2.log("=== pdfVal", pdfVal.unwrap());
 
         SD59x18 xMinusMean = x - mean;
-        //console2.log("xMinusMean", xMinusMean.unwrap());
+        console2.log("xMinusMean", xMinusMean.unwrap());
 
         SD59x18 variance = sigma.mul(sigma);
-        //console2.log("variance", variance.unwrap());
+        console2.log("variance", variance.unwrap());
 
         SD59x18 divideByVariance = -xMinusMean.div(variance);
-        //console2.log("divideByVariance", divideByVariance.unwrap());
+        console2.log("divideByVariance", divideByVariance.unwrap());
 
         SD59x18 result = (divideByVariance.mul(pdfVal));
-        //console2.log("pdfDerivativeAtX", result.unwrap());
+        console2.log("pdfDerivativeAtX", result.unwrap());
 
         return result;
     }
@@ -218,17 +221,23 @@ library PdfLib {
         pure
         returns (bool)
     {
+        console2.log("=== x0", x0.unwrap());
+        console2.log("=== mean1", mean1.unwrap());
+        console2.log("=== sigma1", sigma1.unwrap());
+        console2.log("=== mean2", mean2.unwrap());
+        console2.log("=== sigma2", sigma2.unwrap());
+
         // Calculate first derivative of g(x) - f(x) at x0
         SD59x18 firstDerivative = pdfDerivativeAtX(x0, mean2, sigma2).sub(pdfDerivativeAtX(x0, mean1, sigma1));
-        // console2.log("difference firstDerivative", (firstDerivative.unwrap()));
+        console2.log("difference firstDerivative", (firstDerivative.unwrap()));
 
         // Calculate second derivative of g(x) - f(x) at x0
         SD59x18 secondDerivative =
             pdfSecondDerivativeAtX(x0, mean2, sigma2).sub(pdfSecondDerivativeAtX(x0, mean1, sigma1));
-        // console2.log("difference secondDerivative", (secondDerivative.unwrap()));
+        console2.log("difference secondDerivative", (secondDerivative.unwrap()));
 
         // For x0 to be a turning point the first derivative should be zero (or very close to zero)
-        bool isFirstDerivativeZero = abs(firstDerivative) < SD59x18.wrap(1e14);
+        bool isFirstDerivativeZero = abs(firstDerivative) < FIRST_DERIVATIVE_TOLERANCE;
         // TODO confirm reasonable error
 
         // TODO equal was added below in case the final mean and var are completely correct, but this needs checked
@@ -238,8 +247,8 @@ library PdfLib {
             // For a maximum point the second derivative should be negative
             : secondDerivative.lte(SD59x18.wrap(0));
 
-        // console2.log("=== isFirstDerivativeZero", isFirstDerivativeZero);
-        // console2.log("=== secondDerivativeCondition", secondDerivativeCondition);
+        console2.log("=== isFirstDerivativeZero", isFirstDerivativeZero);
+        console2.log("=== secondDerivativeCondition", secondDerivativeCondition);
 
         return isFirstDerivativeZero && secondDerivativeCondition;
     }

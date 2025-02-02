@@ -23,7 +23,6 @@ export const calculatePdf = (inputs: string[]) => {
 }
 
 export const calculateCurvePoints = (inputs: string[]) => {
-  console.log(inputs)
   const [_, mean1, stdDev1, mean2, stdDev2, x] = inputsToNumbers(inputs)
 
   const curve1 = {
@@ -37,7 +36,6 @@ export const calculateCurvePoints = (inputs: string[]) => {
   };
 
   const differenceExtrema = calculateDifferenceExtrema(curve1, curve2);
-  // console.log({ differenceExtrema })
 
   const pdfTestData = {
     curve1,
@@ -119,7 +117,7 @@ function encodePdfTestData(pdfTestData: any) {
     'struct Curve {int256 mean; int256 stdDev;}',
     'struct Point {int256 x; int256 y;}',
     'struct DifferenceExtrema {Point min; Point max;}',
-    'struct MarketData {Curve c1; Curve c2; DifferenceExtrema diff; int256 x; }'
+    'struct PdfTestData {Curve c1; Curve c2; DifferenceExtrema diff; int256 x;}'
   ])
 
   return encodeAbiParameters(
@@ -135,24 +133,16 @@ function encodePdfTestData(pdfTestData: any) {
  * eg. 3.6 -> "3600000000000000000" 
  */
 function scientificToFixedPoint(num: number): string {
+  //console.log('num', num)
   // Convert to decimal string, keeping full precision
   const str = num.toString();
-  // console.log('Decimal string:', str)
+  //console.log('Decimal string:', str)
 
   // Parse scientific notation if present
   const [coefficient, exponent] = str.split('e').map(part => parseFloat(part || '0'));
   const finalNum = coefficient * Math.pow(10, exponent || 0);
   // console.log('Parsed number:', finalNum)
-
-  // Multiply by 1e18 for fixed point representation
-  const withDecimals = finalNum * 1e18;
-  // console.log('With 18 decimals:', withDecimals)
-
-  // Convert to string and remove decimal point
-  const result = withDecimals.toFixed(0);
-  // console.log('Final result:', result)
-
-  return result;
+  return finalNum.toString()
 }
 
 // ----------------------------------------------------------------------------------------------------

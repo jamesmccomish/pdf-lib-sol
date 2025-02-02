@@ -25,15 +25,6 @@ contract PdfLibTest is PdfLibTestConfig, GeneratePdfTestData {
     uint256 internal constant ONE_ETHER = 1 ether;
     uint256 internal constant HALF_ETHER = 0.5 ether;
 
-    // Some market test values
-    int256 internal constant INITIAL_MEAN = 1 ether;
-    int256 internal constant INITIAL_STD_DEV = 0.4 ether;
-    int256 internal constant INITIAL_VARIANCE = INITIAL_STD_DEV ** 2;
-
-    int256 internal constant SECOND_MEAN = 1.5 ether;
-    int256 internal constant SECOND_STD_DEV = 0.3 ether;
-    int256 internal constant SECOND_VARIANCE = SECOND_STD_DEV ** 2;
-
     PdfTestData internal testData;
 
     function test_pdf_int256Wrapper(int256 seed) public {
@@ -137,25 +128,16 @@ contract PdfLibTest is PdfLibTestConfig, GeneratePdfTestData {
         // assertApproxEqRel(p2, p2Check, TOLERANCE);
     }
 
-    function test_isMinimumPoint_in256Wrapper(int256 mean1, int256 mean2, int256 seed) public {
-        // Means should be within 50% of each other
-        vm.assume(mean1 >= 0 && mean2 >= 0 && mean1 <= type(int256).max / 2 && mean2 <= type(int256).max / 2);
-        vm.assume(mean1 > mean2 - mean1 / 2 && mean1 < mean2 + mean1 / 2);
-
+    function test_isMinimumPoint_in256Wrapper(int256 seed1, int256 seed2) public {
         // We just use this to generate the stdDevs, x is unused
-        (int256 x1, int256 stdDev1, int256 mean1) = generatePdfTestValues(seed);
-        (int256 x2, int256 stdDev2, int256 mean2) = generatePdfTestValues(seed);
+        (, int256 mean1, int256 stdDev1) = generatePdfTestValues(seed1, NARROW_RANGE_CONFIG);
+        (, int256 mean2, int256 stdDev2) = generatePdfTestValues(seed2, NARROW_RANGE_CONFIG);
 
         // Use ts to calculate the minimum point, and take x from that
         PdfTestData memory pdfData = calculateCurvePoints(mean1, stdDev1, mean2, stdDev2, 0);
 
-        bool isMinimum = PdfLib.isMinimumPoint(
-            pdfData.differenceExtrema.min.x,
-            convert(mean1).unwrap(),
-            convert(stdDev1).unwrap(),
-            convert(mean2).unwrap(),
-            convert(stdDev2).unwrap()
-        );
+        bool isMinimum =
+            PdfLib.isMinimumPoint(pdfData.differenceExtrema.min.x / 1e18, (mean1), (stdDev1), (mean2), (stdDev2));
 
         assertEq(isMinimum, true);
     }
