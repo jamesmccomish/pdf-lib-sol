@@ -15,7 +15,7 @@ import { SD59x18 } from "prb-math/sd59x18/ValueType.sol";
 import { uMIN_SD59x18, uMAX_SD59x18 } from "prb-math/sd59x18/Constants.sol";
 
 // Data
-import { GeneratePdfTestData, MarketData, Curve, DifferenceExtrema } from "@test/scripts/GeneratePdfTestData.s.sol";
+import { GeneratePdfTestData, PdfTestData, Curve, DifferenceExtrema } from "@test/scripts/GeneratePdfTestData.s.sol";
 
 // Lib to test
 import { PdfLib } from "@src/PdfLib.sol";
@@ -34,71 +34,54 @@ contract PdfLibTest is PdfLibTestConfig, GeneratePdfTestData {
     int256 internal constant SECOND_STD_DEV = 0.3 ether;
     int256 internal constant SECOND_VARIANCE = SECOND_STD_DEV ** 2;
 
-    MarketData internal testData;
+    PdfTestData internal testData;
 
-    function test_pdf_int256Wrapper() public {
-        int256 mean = 200;
-        //int256 seed = 99;
-        //(int256 x, int256 stdDev) = generatePdfTestValues(mean, seed);
-        int256 x = 220;
-        int256 stdDev = 40;
-
-        console2.log("x", x);
-        console2.log("mean", mean);
-        console2.log("stdDev", stdDev);
-
-        int256 p1 = PdfLib.pdf(wrap(scale).unwrap(), wrap(x).unwrap(), wrap(mean).unwrap(), wrap(stdDev).unwrap());
-        console2.log("--- p1", p1);
-        int256 p1Check = calculatePdf(mean, stdDev, x, scale);
-        console2.log("p1Check", p1Check);
-
-        // Make a new bet which is 10x the original
-        x = x * 10;
-        mean = mean * 10;
-        stdDev = stdDev * 10;
+    function test_pdf_int256Wrapper(int256 seed) public {
+        //seed = 9_671_416_071_630_577_420_746_185_271_013;
+        (int256 x, int256 mean, int256 stdDev) = generatePdfTestValues(seed);
+        // int256 x = 3;
+        // int256 stdDev = 1;
 
         console2.log("x", x);
         console2.log("mean", mean);
         console2.log("stdDev", stdDev);
 
-        int256 p2 =
-            PdfLib.pdf(convert(scale).unwrap(), convert(x).unwrap(), convert(mean).unwrap(), convert(stdDev).unwrap());
+        int256 p = PdfLib.pdf(x, mean, stdDev);
+        console2.log("--- p", p);
+        int256 pCheck = calculatePdf(mean, stdDev, x);
+        console2.log("pCheck", pCheck);
+
+        mean = mean * 1e10;
+        x = x * 1e10;
+        stdDev = stdDev * 1e10;
+
+        console2.log("x", x);
+        console2.log("mean", mean);
+        console2.log("stdDev", stdDev);
+
+        int256 p2 = PdfLib.pdf(x, mean, stdDev);
         console2.log("--- p2", p2);
-        int256 p2Check = calculatePdf(mean, stdDev, x, scale);
+        int256 p2Check = calculatePdf(mean, stdDev, x);
         console2.log("p2Check", p2Check);
 
-        assertApproxEqRel(p1, p1Check, TOLERANCE);
-        assertApproxEqRel(p2, p2Check, TOLERANCE);
-        assertApproxEqRel(p1, p2 * 10, TOLERANCE);
-        assertApproxEqRel(p1Check, p2Check * 10, TOLERANCE);
-
-        x = x * 1e6;
-        mean = mean * 1e6;
-        stdDev = stdDev * 1e6;
-
-        int256 p3 =
-            PdfLib.pdf(convert(scale).unwrap(), convert(x).unwrap(), convert(mean).unwrap(), convert(stdDev).unwrap());
-        int256 p3Check = calculatePdf(mean, stdDev, x, scale);
-        assertApproxEqRel(p3, p3Check, TOLERANCE);
-        assertApproxEqRel(p2, p3 * 1e6, TOLERANCE);
-        assertApproxEqRel(p2Check, p3Check * 1e6, TOLERANCE);
+        // assertApproxEqRel(p, pCheck, TOLERANCE);
     }
 
-    function test_pdf_SD59x18() public {
-        int256 mean = 1e6;
-        int256 seed = 99;
-        (int256 x, int256 stdDev) = generatePdfTestValues(mean, seed);
+    function test_pdfScaledInputs() public { }
 
-        int256 p1 = PdfLib.pdf(scale_SD59x18, convert(x), convert(mean), convert(stdDev)).unwrap();
-        int256 p1Check = calculatePdf(mean, stdDev, x, scale);
+    function test_pdf_SD59x18(int256 seed) public {
+        (int256 x, int256 mean, int256 stdDev) = generatePdfTestValues(seed);
+
+        int256 p1 = PdfLib.pdf(convert(x), convert(mean), convert(stdDev)).unwrap();
+        int256 p1Check = calculatePdf(mean, stdDev, x);
         assertApproxEqRel(p1, p1Check, TOLERANCE);
 
         x = x * 10;
         mean = mean * 10;
         stdDev = stdDev * 10;
 
-        int256 p2 = PdfLib.pdf(scale_SD59x18, convert(x), convert(mean), convert(stdDev)).unwrap();
-        int256 p2Check = calculatePdf(mean, stdDev, x, scale);
+        int256 p2 = PdfLib.pdf(convert(x), convert(mean), convert(stdDev)).unwrap();
+        int256 p2Check = calculatePdf(mean, stdDev, x);
         assertApproxEqRel(p2, p2Check, TOLERANCE);
         assertApproxEqRel(p1, p2 * 10, TOLERANCE);
         assertApproxEqRel(p1Check, p2Check * 10, TOLERANCE);

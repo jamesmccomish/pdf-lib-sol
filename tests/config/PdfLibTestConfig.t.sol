@@ -10,88 +10,88 @@ import { SD59x18 } from "prb-math/sd59x18/ValueType.sol";
 import { uMIN_SD59x18, uMAX_SD59x18 } from "prb-math/sd59x18/Constants.sol";
 
 contract PdfLibTestConfig is Test {
-    /// FIX FOR ALL TESTS
-    int256 internal scale = 1;
-    SD59x18 internal scale_SD59x18 = convert(scale);
+    // 0.00000001%
+    uint256 internal constant TOLERANCE = 1e10;
 
-    // 0.0001%
-    // uint256 internal constant TOLERANCE = 0.00001e18;
-    uint256 internal constant TOLERANCE = 0.01e18; // !!! FIX - return to lower tolerance
+    int256 MIN_MEAN = -1e18;
+    int256 MAX_MEAN = 1e18;
+    uint256 STD_DEV_PERCENT_OF_MEAN = 30;
+    uint256 X_STD_DEV_RANGE = 3;
+
+    struct PdfTestConfig {
+        int256 minMean;
+        int256 maxMean;
+        // stdDev will be within this % of mean (e.g. 30 = 30%)
+        uint256 stdDevPercentOfMean;
+        // x will be within this many stdDevs of mean
+        uint256 xStdDevRange;
+    }
+
+    PdfTestConfig internal DEFAULT_CONFIG = PdfTestConfig({
+        minMean: MIN_MEAN / 1e9,
+        maxMean: MAX_MEAN / 1e9,
+        stdDevPercentOfMean: STD_DEV_PERCENT_OF_MEAN,
+        xStdDevRange: X_STD_DEV_RANGE
+    });
+
+    PdfTestConfig internal FULL_RANGE_CONFIG = PdfTestConfig({
+        minMean: MIN_MEAN,
+        maxMean: MAX_MEAN,
+        stdDevPercentOfMean: STD_DEV_PERCENT_OF_MEAN,
+        xStdDevRange: X_STD_DEV_RANGE
+    });
 
     /**
-     *
-     * For now all values are scaled up by 1e18 when passed to the contract.
-     * This is fine for our initial markets
-     * It is equivalent to doing parseEther(value) on the frontend
-     *
+     * @notice generate test values for pdf using default config
      */
-    function inputScaling(int256 x, int256 mean, int256 stdDev) public view returns (int256, int256, int256, int256) {
-        // // get size of mean
-        // int256 meanSize = convert(log10(convert(mean)));
-        // console2.log("meanSize", meanSize);
-
-        // int256 _scale = 1;
-
-        // if (meanSize < 18) {
-        //     uint256 eTerm = 18 - uint256(meanSize);
-        //     console2.log("eTerm", eTerm);
-        //     // scale = int256(10 ** (18 - uint256(abs(wrap(meanSize)).unwrap())) - 1);
-        //     _scale = int256(10 ** eTerm);
-        // }
-        // console2.log("scale", _scale);
-
-        // // scale up
-        // return (x * _scale, mean * _scale, stdDev * _scale, _scale);
-        return (convert(x).unwrap(), convert(mean).unwrap(), convert(stdDev).unwrap(), scale_SD59x18.unwrap());
+    function generatePdfTestValues(int256 seed) public returns (int256 x, int256 stdDev, int256 mean) {
+        return generatePdfTestValues(seed, DEFAULT_CONFIG);
     }
 
     /**
-     * @notice generate test values for pdf
-     *
-     * @dev from a random mean, generate sensible values to test
-     * - mean from 1e4 to 1e7
-     * - stdDev within 50% of the mean
-     * - x within 5 stdDev of the mean
-     *
-     * @param mean the mean of the distribution
-     * @param seed the seed to use for the random number generator
-     * @return x the x value to eveluate at
+     * @notice generate test values for pdf with custom config
+     * @param seed Random seed to generate values
+     * @param config Configuration for bounds of generated values
+     * @return x the x value to evaluate at
+     * @return mean the mean of the distribution
      * @return stdDev the stdDev of the distribution
      */
-    function generatePdfTestValues(int256 mean, int256 seed) public pure returns (int256 x, int256 stdDev) {
-        vm.assume(mean > 1e4 && mean < 1e7);
-
-        // console2.log("___ generate vals ___");
-        // console2.log("mean", mean);
-        // console2.log("seed", seed);
+    function generatePdfTestValues(
+        int256 seed,
+        PdfTestConfig memory config
+    )
+        public
+        pure
+        returns (int256 x, int256 mean, int256 stdDev)
+    {
+        int256 meanRange = config.maxMean - config.minMean;
+        int256 meanMidpoint = config.minMean + (meanRange / 2);
 
         // If seed is out of range to find abs, modulo by 1e18 for random enough value
         bool seedOutOfRange = seed <= uMIN_SD59x18;
         if (seedOutOfRange) {
-            seed = seed % 1e18;
+            seed = seed % meanRange;
         }
-
         int256 absSeed = int256(abs(wrap(seed)).unwrap());
-        //console2.log("absSeed", absSeed);
 
+        // Generate mean as midpoint ± random offset
+        int256 maxOffset = meanRange / 2; // Maximum distance from midpoint
+        int256 offset = absSeed % maxOffset;
         int256 side = seed % 2 == 0 ? int256(1) : int256(-1);
-        //console2.log("side", side);
+        mean = meanMidpoint + (side * offset);
 
-        // Calculate max range for stdDev (30% of mean), ensure we don't modulo by zero
-        int256 stdDevRange = (int256(mean) * 30) / 100;
-        if (stdDevRange == 0) {
-            stdDevRange = 1;
-        }
-        // Generate a pseudo-random value within [1 ... stdDevRange]
-        stdDev = int256(1 + (absSeed % stdDevRange));
-        //console2.log("stdDev", stdDev);
+        // Calculate stdDev as percentage of absolute mean value to ensure positive
+        int256 absMean = mean < 0 ? -mean : mean;
+        int256 stdDevRange = (absMean * int256(config.stdDevPercentOfMean)) / 100;
 
-        // x should be within +/- 3 stdDev of mean to avoid rounding errors
-        x = mean + side * (absSeed % (stdDev * 3));
-        //console2.log("x", x);
+        // Ensure stdDev is always positive and at least 1
+        stdDevRange = stdDevRange < 1 ? int256(1) : stdDevRange;
+        stdDev = 1 + (absSeed % stdDevRange);
 
-        vm.assume(x > 0);
+        // Generate x within configured number of stdDevs from mean
+        side = seed % 2 == 0 ? int256(1) : int256(-1);
+        x = mean + side * (absSeed % (stdDev * int256(config.xStdDevRange)));
 
-        return (x, stdDev);
+        return (x, mean, stdDev);
     }
 }

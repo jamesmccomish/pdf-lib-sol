@@ -29,16 +29,15 @@ struct PdfTestData {
 }
 
 contract GeneratePdfTestData is Test {
-    function calculatePdf(int256 mean, int256 stdDev, int256 x, int256 scale) public returns (int256) {
-        string[] memory cmd = new string[](10);
+    function calculatePdf(int256 mean, int256 stdDev, int256 x) public returns (int256) {
+        string[] memory cmd = new string[](6);
 
         cmd[0] = "bun";
-        cmd[1] = "test/scripts/get-test-curves.ts";
+        cmd[1] = "tests/scripts/generate-pdf-reference-data.ts";
         cmd[2] = "calculatePdf";
         cmd[3] = vm.toString(mean);
         cmd[4] = vm.toString(stdDev);
         cmd[5] = vm.toString(x);
-        cmd[6] = vm.toString(scale);
 
         bytes memory res = vm.ffi(cmd);
         int256 result = abi.decode(res, (int256));
@@ -50,8 +49,7 @@ contract GeneratePdfTestData is Test {
         int256 stdDev1,
         int256 mean2,
         int256 stdDev2,
-        int256 x,
-        int256 scale
+        int256 x
     )
         public
         returns (PdfTestData memory)
@@ -67,15 +65,14 @@ contract GeneratePdfTestData is Test {
         cmd[5] = vm.toString(mean2);
         cmd[6] = vm.toString(stdDev2);
         cmd[7] = vm.toString(x);
-        cmd[8] = vm.toString(scale);
 
         bytes memory res = vm.ffi(cmd);
         PdfTestData memory data = abi.decode(res, (PdfTestData));
         return data;
     }
 
-    function calculateDerivative(int256 mean, int256 stdDev, int256 x, int256 scale) public returns (int256) {
-        string[] memory cmd = new string[](9);
+    function calculateDerivative(int256 mean, int256 stdDev, int256 x) public returns (int256) {
+        string[] memory cmd = new string[](7);
 
         cmd[0] = "bun";
         // cmd[2] = "--silent";
@@ -84,15 +81,14 @@ contract GeneratePdfTestData is Test {
         cmd[3] = vm.toString(mean);
         cmd[4] = vm.toString(stdDev);
         cmd[5] = vm.toString(x);
-        cmd[6] = vm.toString(scale);
 
         bytes memory res = vm.ffi(cmd);
         int256 result = abi.decode(res, (int256));
         return result;
     }
 
-    function calculateSecondDerivative(int256 mean, int256 stdDev, int256 x, int256 scale) public returns (int256) {
-        string[] memory cmd = new string[](9);
+    function calculateSecondDerivative(int256 mean, int256 stdDev, int256 x) public returns (int256) {
+        string[] memory cmd = new string[](7);
 
         cmd[0] = "bun";
         // cmd[2] = "--silent";
@@ -101,7 +97,6 @@ contract GeneratePdfTestData is Test {
         cmd[3] = vm.toString(mean);
         cmd[4] = vm.toString(stdDev);
         cmd[5] = vm.toString(x);
-        cmd[6] = vm.toString(scale);
 
         bytes memory res = vm.ffi(cmd);
         int256 result = abi.decode(res, (int256));
