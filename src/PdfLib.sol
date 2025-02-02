@@ -44,39 +44,37 @@ library PdfLib {
         return pdf(convert(x), convert(mean), convert(sigma)).unwrap();
     }
 
-    // function isMinimumPoint(
-    //     int256 scale,
-    //     int256 x0,
-    //     int256 mean1,
-    //     int256 sigma1,
-    //     int256 mean2,
-    //     int256 sigma2
-    // )
-    //     internal
-    //     pure
-    //     returns (bool)
-    // {
-    //     return isTurningPoint(
-    //         wrap(scale), wrap(x0), wrap(mean1), wrap(sigma1), wrap(mean2), wrap(sigma2), TurningPoint.MINIMUM
-    //     );
-    // }
+    function isMinimumPoint(
+        int256 x0,
+        int256 mean1,
+        int256 sigma1,
+        int256 mean2,
+        int256 sigma2
+    )
+        internal
+        pure
+        returns (bool)
+    {
+        return isTurningPoint(
+            convert(x0), convert(mean1), convert(sigma1), convert(mean2), convert(sigma2), TurningPoint.MINIMUM
+        );
+    }
 
-    // function isMaximumPoint(
-    //     int256 scale,
-    //     int256 x0,
-    //     int256 mean1,
-    //     int256 sigma1,
-    //     int256 mean2,
-    //     int256 sigma2
-    // )
-    //     internal
-    //     pure
-    //     returns (bool)
-    // {
-    //     return isTurningPoint(
-    //         wrap(scale), wrap(x0), wrap(mean1), wrap(sigma1), wrap(mean2), wrap(sigma2), TurningPoint.MAXIMUM
-    //     );
-    // }
+    function isMaximumPoint(
+        int256 x0,
+        int256 mean1,
+        int256 sigma1,
+        int256 mean2,
+        int256 sigma2
+    )
+        internal
+        pure
+        returns (bool)
+    {
+        return isTurningPoint(
+            convert(x0), convert(mean1), convert(sigma1), convert(mean2), convert(sigma2), TurningPoint.MAXIMUM
+        );
+    }
 
     /**
      * @notice Calculate the difference between two pdfs
@@ -150,7 +148,7 @@ library PdfLib {
      */
     function pdfDerivativeAtX(SD59x18 x, SD59x18 mean, SD59x18 sigma) internal pure returns (SD59x18) {
         SD59x18 pdfVal = pdf(x, mean, sigma);
-        //console2.log("=== pdfVal", pdfVal.unwrap());
+        console2.log("=== pdfVal", pdfVal.unwrap());
 
         SD59x18 xMinusMean = x - mean;
         //console2.log("xMinusMean", xMinusMean.unwrap());
@@ -196,100 +194,96 @@ library PdfLib {
         return result;
     }
 
-    // /**
-    //  *
-    //  * @notice Check if x0 is a turning point of g(x) - f(x)
-    //  * @param x0 The point to check
-    //  * @param mean1 The mean of the first distribution
-    //  * @param sigma1 The sigma of the first distribution
-    //  * @param mean2 The mean of the second distribution
-    //  * @param sigma2  The sigma of the second distribution
-    //  * @param turningPoint Whether to check if x0 is a minimum or maximum point
-    //  *
-    //  * @dev There is no closed form of the solution for the minimum point of g(x) - f(x)
-    //  *      We can use the first and second derivative tests to check if x0 is a minimum point
-    //  */
-    // function isTurningPoint(
-    //     SD59x18 scale,
-    //     SD59x18 x0,
-    //     SD59x18 mean1,
-    //     SD59x18 sigma1,
-    //     SD59x18 mean2,
-    //     SD59x18 sigma2,
-    //     TurningPoint turningPoint
-    // )
-    //     public
-    //     pure
-    //     returns (bool)
-    // {
-    //     // Calculate first derivative of g(x) - f(x) at x0
-    //     SD59x18 firstDerivative =
-    //         pdfDerivativeAtX(scale, x0, mean2, sigma2).sub(pdfDerivativeAtX(scale, x0, mean1, sigma1));
-    //     // console2.log("difference firstDerivative", (firstDerivative.unwrap()));
+    /**
+     *
+     * @notice Check if x0 is a turning point of g(x) - f(x)
+     * @param x0 The point to check
+     * @param mean1 The mean of the first distribution
+     * @param sigma1 The sigma of the first distribution
+     * @param mean2 The mean of the second distribution
+     * @param sigma2  The sigma of the second distribution
+     * @param turningPoint Whether to check if x0 is a minimum or maximum point
+     *
+     * @dev There is no closed form of the solution for the minimum point of g(x) - f(x)
+     *      We can use the first and second derivative tests to check if x0 is a minimum point
+     */
+    function isTurningPoint(
+        SD59x18 x0,
+        SD59x18 mean1,
+        SD59x18 sigma1,
+        SD59x18 mean2,
+        SD59x18 sigma2,
+        TurningPoint turningPoint
+    )
+        public
+        pure
+        returns (bool)
+    {
+        // Calculate first derivative of g(x) - f(x) at x0
+        SD59x18 firstDerivative = pdfDerivativeAtX(x0, mean2, sigma2).sub(pdfDerivativeAtX(x0, mean1, sigma1));
+        // console2.log("difference firstDerivative", (firstDerivative.unwrap()));
 
-    //     // Calculate second derivative of g(x) - f(x) at x0
-    //     SD59x18 secondDerivative =
-    //         pdfSecondDerivativeAtX(scale, x0, mean2, sigma2).sub(pdfSecondDerivativeAtX(scale, x0, mean1, sigma1));
-    //     // console2.log("difference secondDerivative", (secondDerivative.unwrap()));
+        // Calculate second derivative of g(x) - f(x) at x0
+        SD59x18 secondDerivative =
+            pdfSecondDerivativeAtX(x0, mean2, sigma2).sub(pdfSecondDerivativeAtX(x0, mean1, sigma1));
+        // console2.log("difference secondDerivative", (secondDerivative.unwrap()));
 
-    //     // For x0 to be a turning point the first derivative should be zero (or very close to zero)
-    //     bool isFirstDerivativeZero = abs(firstDerivative) < SD59x18.wrap(1e14);
-    //     // TODO confirm reasonable error
+        // For x0 to be a turning point the first derivative should be zero (or very close to zero)
+        bool isFirstDerivativeZero = abs(firstDerivative) < SD59x18.wrap(1e14);
+        // TODO confirm reasonable error
 
-    //     // TODO equal was added below in case the final mean and var are completely correct, but this needs checked
-    //     bool secondDerivativeCondition = turningPoint == TurningPoint.MINIMUM
-    //         // For a minimum point the second derivative should be positive
-    //         ? secondDerivative.gte(SD59x18.wrap(0))
-    //         // For a maximum point the second derivative should be negative
-    //         : secondDerivative.lte(SD59x18.wrap(0));
+        // TODO equal was added below in case the final mean and var are completely correct, but this needs checked
+        bool secondDerivativeCondition = turningPoint == TurningPoint.MINIMUM
+            // For a minimum point the second derivative should be positive
+            ? secondDerivative.gte(SD59x18.wrap(0))
+            // For a maximum point the second derivative should be negative
+            : secondDerivative.lte(SD59x18.wrap(0));
 
-    //     // console2.log("=== isFirstDerivativeZero", isFirstDerivativeZero);
-    //     // console2.log("=== secondDerivativeCondition", secondDerivativeCondition);
+        // console2.log("=== isFirstDerivativeZero", isFirstDerivativeZero);
+        // console2.log("=== secondDerivativeCondition", secondDerivativeCondition);
 
-    //     return isFirstDerivativeZero && secondDerivativeCondition;
-    // }
+        return isFirstDerivativeZero && secondDerivativeCondition;
+    }
 
-    // /**
-    //  *
-    //  * @notice Check if x0 is a minimum point of g(x) - f(x)
-    //  * @param x0 The point to check
-    //  * @param mean1 The mean of the first distribution
-    //  * @param sigma1 The sigma of the first distribution
-    //  * @param mean2 The mean of the second distribution
-    //  * @param sigma2  The sigma of the second distribution
-    //  *
-    //  * @dev There is no closed form of the solution for the minimum point of g(x) - f(x)
-    //  *      We can use the first and second derivative tests to check if x0 is a minimum point
-    //  */
-    // function isMinimumPoint(
-    //     SD59x18 scale,
-    //     SD59x18 x0,
-    //     SD59x18 mean1,
-    //     SD59x18 sigma1,
-    //     SD59x18 mean2,
-    //     SD59x18 sigma2
-    // )
-    //     public
-    //     pure
-    //     returns (bool)
-    // {
-    //     return isTurningPoint(scale, x0, mean1, sigma1, mean2, sigma2, TurningPoint.MINIMUM);
-    // }
+    /**
+     *
+     * @notice Check if x0 is a minimum point of g(x) - f(x)
+     * @param x0 The point to check
+     * @param mean1 The mean of the first distribution
+     * @param sigma1 The sigma of the first distribution
+     * @param mean2 The mean of the second distribution
+     * @param sigma2  The sigma of the second distribution
+     *
+     * @dev There is no closed form of the solution for the minimum point of g(x) - f(x)
+     *      We can use the first and second derivative tests to check if x0 is a minimum point
+     */
+    function isMinimumPoint(
+        SD59x18 x0,
+        SD59x18 mean1,
+        SD59x18 sigma1,
+        SD59x18 mean2,
+        SD59x18 sigma2
+    )
+        public
+        pure
+        returns (bool)
+    {
+        return isTurningPoint(x0, mean1, sigma1, mean2, sigma2, TurningPoint.MINIMUM);
+    }
 
-    // function isMaximumPoint(
-    //     SD59x18 scale,
-    //     SD59x18 x0,
-    //     SD59x18 mean1,
-    //     SD59x18 sigma1,
-    //     SD59x18 mean2,
-    //     SD59x18 sigma2
-    // )
-    //     public
-    //     pure
-    //     returns (bool)
-    // {
-    //     return isTurningPoint(scale, x0, mean1, sigma1, mean2, sigma2, TurningPoint.MAXIMUM);
-    // }
+    function isMaximumPoint(
+        SD59x18 x0,
+        SD59x18 mean1,
+        SD59x18 sigma1,
+        SD59x18 mean2,
+        SD59x18 sigma2
+    )
+        public
+        pure
+        returns (bool)
+    {
+        return isTurningPoint(x0, mean1, sigma1, mean2, sigma2, TurningPoint.MAXIMUM);
+    }
 
     function pdfDifference(
         SD59x18 x,

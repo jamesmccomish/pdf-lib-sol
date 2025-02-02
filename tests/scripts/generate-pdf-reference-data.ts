@@ -11,7 +11,7 @@ export const calculatePdf = (inputs: string[]) => {
   const [_, mean, stdDev, x, scale] = inputsToNumbers(inputs)
 
   const pdf = normalDistributionPDF(mean, stdDev, x, scale)
-  const formattedPdf = parseEther(scientificToDecimal(pdf))
+  const formattedPdf = parseEther(scientificToFixedPoint(pdf))
 
   const encoded = encodeAbiParameters(
     parseAbiParameters('int256 x'),
@@ -63,7 +63,7 @@ export const calculateDerivative = (inputs: string[]) => {
   const derivativeAtX = pdfDerivative(curve)(x, scale)
   // console.log(derivativeAtX)
 
-  const formattedDerivative = parseEther(scientificToDecimal(derivativeAtX))
+  const formattedDerivative = BigInt(scientificToFixedPoint(derivativeAtX))
   //console.log(parsedToEther)
 
   const encoded = encodeAbiParameters(
@@ -86,7 +86,7 @@ export const calculateSecondDerivative = (inputs: string[]) => {
   const secondDerivativeAtX = pdfSecondDerivative(curve)(x, scale)
   // console.log(secondDerivativeAtX)
 
-  const formattedSecondDerivative = parseEther(scientificToDecimal(secondDerivativeAtX))
+  const formattedSecondDerivative = BigInt(scientificToFixedPoint(secondDerivativeAtX))
   //console.log(parsedToEther)
 
   const encoded = encodeAbiParameters(
@@ -106,7 +106,7 @@ function inputsToNumbers(inputs: string[]) {
 }
 
 function allObjectValuesToBigInt(obj: any): any {
-  if (typeof obj === 'number') return parseEther(scientificToDecimal(obj))
+  if (typeof obj === 'number') return parseEther(scientificToFixedPoint(obj))
 
   if (typeof obj !== 'object' || obj === null) return obj;
 
@@ -130,11 +130,22 @@ function encodePdfTestData(pdfTestData: any) {
   )
 }
 
-function scientificToDecimal(num: number): string {
-  // Convert to string with maximum precision
-  const str = num.toFixed(20);
-  // Remove trailing zeros after decimal point
-  return str.replace(/\.?0+$/, '');
+/**
+ * @notice Convert a number to the equivalent rounded that solidity would do
+ * 
+ * eg. -2.0568613326757935e-17 -> -20
+ * eg. 3.6 -> 3
+ */
+function scientificToFixedPoint(num: number): string {
+  // Convert to fixed decimal and multiply by 1e18 to match Solidity's fixed-point representation
+  const scaledNum = num * 1e18;
+  // console.log(scaledNum)
+
+  // Truncate decimal places by converting to string and taking only the integer part
+  const truncated = scaledNum.toString().split('.')[0];
+  //console.log(truncated)
+
+  return truncated;
 }
 
 // ----------------------------------------------------------------------------------------------------

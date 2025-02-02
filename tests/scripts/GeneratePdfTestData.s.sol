@@ -54,11 +54,10 @@ contract GeneratePdfTestData is Test {
         public
         returns (PdfTestData memory)
     {
-        string[] memory cmd = new string[](10);
+        string[] memory cmd = new string[](8);
 
         cmd[0] = "bun";
-        //cmd[1] = "--silent";
-        cmd[1] = "test/scripts/get-test-curves.ts";
+        cmd[1] = "tests/scripts/generate-pdf-reference-data.ts";
         cmd[2] = "calculateCurvePoints";
         cmd[3] = vm.toString(mean1);
         cmd[4] = vm.toString(stdDev1);
@@ -72,11 +71,10 @@ contract GeneratePdfTestData is Test {
     }
 
     function calculateDerivative(int256 mean, int256 stdDev, int256 x) public returns (int256) {
-        string[] memory cmd = new string[](7);
+        string[] memory cmd = new string[](6);
 
         cmd[0] = "bun";
-        // cmd[2] = "--silent";
-        cmd[1] = "test/scripts/get-test-curves.ts";
+        cmd[1] = "tests/scripts/generate-pdf-reference-data.ts";
         cmd[2] = "calculateDerivative";
         cmd[3] = vm.toString(mean);
         cmd[4] = vm.toString(stdDev);
@@ -88,11 +86,10 @@ contract GeneratePdfTestData is Test {
     }
 
     function calculateSecondDerivative(int256 mean, int256 stdDev, int256 x) public returns (int256) {
-        string[] memory cmd = new string[](7);
+        string[] memory cmd = new string[](6);
 
         cmd[0] = "bun";
-        // cmd[2] = "--silent";
-        cmd[1] = "test/scripts/get-test-curves.ts";
+        cmd[1] = "tests/scripts/generate-pdf-reference-data.ts";
         cmd[2] = "calculateSecondDerivative";
         cmd[3] = vm.toString(mean);
         cmd[4] = vm.toString(stdDev);
