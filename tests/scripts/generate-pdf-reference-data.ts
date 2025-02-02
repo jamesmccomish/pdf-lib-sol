@@ -8,9 +8,9 @@ import { calculateDifferenceExtrema } from './pdf-test-utils';
 // ---------------------------------------------------------------------------------------------------- 
 
 export const calculatePdf = (inputs: string[]) => {
-  const [_, mean, stdDev, x, scale] = inputsToNumbers(inputs)
+  const [_, mean, stdDev, x] = inputsToNumbers(inputs)
 
-  const pdf = normalDistributionPDF(mean, stdDev, x, scale)
+  const pdf = normalDistributionPDF(mean, stdDev, x)
   const formattedPdf = parseEther(scientificToFixedPoint(pdf))
 
   const encoded = encodeAbiParameters(
@@ -24,16 +24,16 @@ export const calculatePdf = (inputs: string[]) => {
 
 export const calculateCurvePoints = (inputs: string[]) => {
   console.log(inputs)
-  const [_, mean1, stdDev1, mean2, stdDev2, x, scale] = inputsToNumbers(inputs)
+  const [_, mean1, stdDev1, mean2, stdDev2, x] = inputsToNumbers(inputs)
 
   const curve1 = {
-    mean: mean1 * scale,
-    stdDev: stdDev1 * scale,
+    mean: mean1,
+    stdDev: stdDev1,
   };
 
   const curve2 = {
-    mean: mean2 * scale,
-    stdDev: stdDev2 * scale,
+    mean: mean2,
+    stdDev: stdDev2,
   };
 
   const differenceExtrema = calculateDifferenceExtrema(curve1, curve2);
@@ -53,14 +53,14 @@ export const calculateCurvePoints = (inputs: string[]) => {
 }
 
 export const calculateDerivative = (inputs: string[]) => {
-  const [_, mean, stdDev, x, scale] = inputsToNumbers(inputs)
+  const [_, mean, stdDev, x] = inputsToNumbers(inputs)
 
   const curve = {
     mean,
     stdDev,
   }
 
-  const derivativeAtX = pdfDerivative(curve)(x, scale)
+  const derivativeAtX = pdfDerivative(curve)(x)
   // console.log(derivativeAtX)
 
   const formattedDerivative = BigInt(scientificToFixedPoint(derivativeAtX))
@@ -76,18 +76,16 @@ export const calculateDerivative = (inputs: string[]) => {
 }
 
 export const calculateSecondDerivative = (inputs: string[]) => {
-  const [_, mean, stdDev, x, scale] = inputsToNumbers(inputs)
+  const [_, mean, stdDev, x] = inputsToNumbers(inputs)
 
   const curve = {
     mean,
     stdDev,
   }
 
-  const secondDerivativeAtX = pdfSecondDerivative(curve)(x, scale)
-  // console.log(secondDerivativeAtX)
+  const secondDerivativeAtX = pdfSecondDerivative(curve)(x)
 
   const formattedSecondDerivative = BigInt(scientificToFixedPoint(secondDerivativeAtX))
-  //console.log(parsedToEther)
 
   const encoded = encodeAbiParameters(
     parseAbiParameters('int256 x'),
@@ -131,21 +129,30 @@ function encodePdfTestData(pdfTestData: any) {
 }
 
 /**
- * @notice Convert a number to the equivalent rounded that solidity would do
+ * @notice Convert a number to Solidity's fixed-point representation (18 digits)
  * 
- * eg. -2.0568613326757935e-17 -> -20
- * eg. 3.6 -> 3
+ * eg. -2.0568613326757935e-17 -> "-20" 
+ * eg. 3.6 -> "3600000000000000000" 
  */
 function scientificToFixedPoint(num: number): string {
-  // Convert to fixed decimal and multiply by 1e18 to match Solidity's fixed-point representation
-  const scaledNum = num * 1e18;
-  // console.log(scaledNum)
+  // Convert to decimal string, keeping full precision
+  const str = num.toString();
+  // console.log('Decimal string:', str)
 
-  // Truncate decimal places by converting to string and taking only the integer part
-  const truncated = scaledNum.toString().split('.')[0];
-  //console.log(truncated)
+  // Parse scientific notation if present
+  const [coefficient, exponent] = str.split('e').map(part => parseFloat(part || '0'));
+  const finalNum = coefficient * Math.pow(10, exponent || 0);
+  // console.log('Parsed number:', finalNum)
 
-  return truncated;
+  // Multiply by 1e18 for fixed point representation
+  const withDecimals = finalNum * 1e18;
+  // console.log('With 18 decimals:', withDecimals)
+
+  // Convert to string and remove decimal point
+  const result = withDecimals.toFixed(0);
+  // console.log('Final result:', result)
+
+  return result;
 }
 
 // ----------------------------------------------------------------------------------------------------

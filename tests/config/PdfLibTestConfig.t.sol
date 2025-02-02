@@ -41,6 +41,9 @@ contract PdfLibTestConfig is Test {
         xStdDevRange: X_STD_DEV_RANGE
     });
 
+    PdfTestConfig internal NARROW_RANGE_CONFIG =
+        PdfTestConfig({ minMean: MIN_MEAN / 1e9, maxMean: MAX_MEAN / 1e9, stdDevPercentOfMean: 10, xStdDevRange: 1 });
+
     /**
      * @notice generate test values for pdf using default config
      */

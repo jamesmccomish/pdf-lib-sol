@@ -184,8 +184,7 @@ library PdfLib {
         // (x-μ)²/σ⁴ scaled
         SD59x18 term1 = divideByVariance.div(sigma.mul(sigma));
         // 1/σ²
-        SD59x18 term2 = divideByVariance; // mul SCALAR_SQUARED_SD59x18 ?
-        //console2.log("term2", term2.unwrap());
+        SD59x18 term2 = inv(sigma.mul(sigma));
 
         // full second derivative: [(x-μ)²/σ⁴ - 1/σ²] * pdf(x)
         SD59x18 result = (term1.sub(term2)).mul(pdf(x, mean, sigma));
