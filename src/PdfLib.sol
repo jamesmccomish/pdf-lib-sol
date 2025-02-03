@@ -5,8 +5,6 @@ import { convert, convert } from "prb-math/sd59x18/Conversions.sol";
 import { exp, div, mul, inv, pow, wrap, sqrt, abs, ln } from "prb-math/sd59x18/Math.sol";
 import { SD59x18 } from "prb-math/sd59x18/ValueType.sol";
 
-import { console2 } from "forge-std/console2.sol";
-
 /**
  * @title PdfLib
  *
@@ -48,6 +46,35 @@ library PdfLib {
      */
     function pdf(int256 x, int256 mean, int256 sigma) internal pure returns (int256) {
         return pdf(convert(x), convert(mean), convert(sigma)).unwrap();
+    }
+
+    /**
+     * @notice Calculate the difference between two pdfs
+     *
+     * @param x The value at which to evaluate the pdf
+     * @param mean1 The mean of the first distribution
+     * @param sigma1 The sigma of the first distribution
+     * @param mean2 The mean of the second distribution
+     * @param sigma2 The sigma of the second distribution
+     *
+     * @return The difference between the two pdfs
+     *
+     * @dev Note:
+     * - The curve pdf2 - pdf1 is not a valid pdf
+     * - This function is useful only to get the difference between two pdfs at a given x
+     */
+    function pdfDifference(
+        int256 x,
+        int256 mean1,
+        int256 sigma1,
+        int256 mean2,
+        int256 sigma2
+    )
+        internal
+        pure
+        returns (int256)
+    {
+        return pdfDifference(wrap(x), wrap(mean1), wrap(sigma1), wrap(mean2), wrap(sigma2)).unwrap();
     }
 
     /**
@@ -107,35 +134,6 @@ library PdfLib {
         );
     }
 
-    /**
-     * @notice Calculate the difference between two pdfs
-     *
-     * @param x The value at which to evaluate the pdf
-     * @param mean1 The mean of the first distribution
-     * @param sigma1 The sigma of the first distribution
-     * @param mean2 The mean of the second distribution
-     * @param sigma2 The sigma of the second distribution
-     *
-     * @return The difference between the two pdfs
-     *
-     * @dev Note:
-     * - The curve pdf2 - pdf1 is not a valid pdf
-     * - This function is useful only to get the difference between two pdfs at a given x
-     */
-    function pdfDifference(
-        int256 x,
-        int256 mean1,
-        int256 sigma1,
-        int256 mean2,
-        int256 sigma2
-    )
-        internal
-        pure
-        returns (int256)
-    {
-        return pdfDifference(wrap(x), wrap(mean1), wrap(sigma1), wrap(mean2), wrap(sigma2)).unwrap();
-    }
-
     function pdf(SD59x18 x, SD59x18 mean, SD59x18 sigma) internal pure returns (SD59x18 p) {
         // -(x - µ)^2
         SD59x18 xMinusMean = x - mean;
@@ -151,6 +149,20 @@ library PdfLib {
 
         // p = (1 / σ√2π)e^((-(x - µ)^2) / 2σ^2)
         p = mul(coefficient, exponentResult);
+    }
+
+    function pdfDifference(
+        SD59x18 x,
+        SD59x18 mean1,
+        SD59x18 sigma1,
+        SD59x18 mean2,
+        SD59x18 sigma2
+    )
+        internal
+        pure
+        returns (SD59x18)
+    {
+        return pdf(x, mean1, sigma1).sub(pdf(x, mean2, sigma2));
     }
 
     /**
@@ -235,15 +247,11 @@ library PdfLib {
         bool isFirstDerivativeZero = abs(firstDerivative) < FIRST_DERIVATIVE_TOLERANCE;
         // TODO confirm reasonable error
 
-        // TODO equal was added below in case the final mean and var are completely correct, but this needs checked
         bool secondDerivativeCondition = turningPoint == TurningPoint.MINIMUM
             // For a minimum point the second derivative should be positive
             ? secondDerivative.gte(SD59x18.wrap(0))
             // For a maximum point the second derivative should be negative
             : secondDerivative.lte(SD59x18.wrap(0));
-
-        // console2.log("=== isFirstDerivativeZero", isFirstDerivativeZero);
-        // console2.log("=== secondDerivativeCondition", secondDerivativeCondition);
 
         return isFirstDerivativeZero && secondDerivativeCondition;
     }
@@ -286,20 +294,6 @@ library PdfLib {
         returns (bool)
     {
         return isTurningPoint(x0, mean1, sigma1, mean2, sigma2, TurningPoint.MAXIMUM);
-    }
-
-    function pdfDifference(
-        SD59x18 x,
-        SD59x18 mean1,
-        SD59x18 sigma1,
-        SD59x18 mean2,
-        SD59x18 sigma2
-    )
-        internal
-        pure
-        returns (SD59x18)
-    {
-        return pdf(x, mean1, sigma1).sub(pdf(x, mean2, sigma2));
     }
 
     // TODO

@@ -47,6 +47,20 @@ contract PdfLibTest is PdfLibTestConfig, GeneratePdfTestData {
         assertApproxEqRel(p1Check, p2Check * scale, TOLERANCE, "p1Check p2Check scaled");
     }
 
+    function test_pdfDifference(int256 seed) public {
+        (int256 x, int256 mean1, int256 stdDev1) = generatePdfTestValues(seed);
+
+        int256 mean2 = mean1 + (mean1 * (seed % 20)) / 100;
+        int256 stdDev2 = stdDev1 + (stdDev1 * (seed % 20)) / 100;
+
+        int256 diff = PdfLib.pdfDifference(
+            convert(x), convert(mean1), convert(stdDev1), convert(mean2), convert(stdDev2)
+        ).unwrap();
+        int256 diffCheck = calculatePdfDifference(mean1, stdDev1, mean2, stdDev2, x);
+
+        assertApproxEqRel(diff, diffCheck, TOLERANCE);
+    }
+
     function test_isMinimumPoint(int256 seed) public {
         // We just use this to generate the stdDevs, x is unused
         (, int256 mean1, int256 stdDev1) = generatePdfTestValues(seed, NARROW_RANGE_CONFIG);
@@ -61,20 +75,6 @@ contract PdfLibTest is PdfLibTestConfig, GeneratePdfTestData {
             PdfLib.isMinimumPoint(pdfData.differenceExtrema.min.x / 1e18, (mean1), (stdDev1), (mean2), (stdDev2));
 
         assertEq(isMinimum, true);
-    }
-
-    function test_pdfDifference(int256 seed) public {
-        (int256 x, int256 mean1, int256 stdDev1) = generatePdfTestValues(seed);
-
-        int256 mean2 = mean1 + (mean1 * (seed % 20)) / 100;
-        int256 stdDev2 = stdDev1 + (stdDev1 * (seed % 20)) / 100;
-
-        int256 diff = PdfLib.pdfDifference(
-            convert(x), convert(mean1), convert(stdDev1), convert(mean2), convert(stdDev2)
-        ).unwrap();
-        int256 diffCheck = calculatePdfDifference(mean1, stdDev1, mean2, stdDev2, x);
-
-        assertApproxEqRel(diff, diffCheck, TOLERANCE);
     }
 
     function test_pdfDerivitiveAtX(int256 seed) public {

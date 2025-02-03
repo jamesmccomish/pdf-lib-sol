@@ -20,9 +20,11 @@
     "blockchain",
     "ethereum",
     "smart-contracts",
+    "foundry",
     "solidity",
     "probability",
-    "pdf"
+    "pdf",
+    "statistics"
   ],
   "private": true,
   "scripts": {

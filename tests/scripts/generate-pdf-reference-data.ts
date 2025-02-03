@@ -3,6 +3,7 @@ import { encodeAbiParameters, parseAbiParameters, parseEther } from 'viem';
 import { normalDistributionPDF, pdfDerivative, pdfSecondDerivative } from './pdf-reference';
 import { calculateDifferenceExtrema } from './pdf-test-utils';
 
+
 // ----------------------------------------------------------------------------------------------------
 // Test scripts
 // ---------------------------------------------------------------------------------------------------- 
@@ -20,6 +21,8 @@ export const calculatePdf = (inputs: string[]) => {
   console.log(encoded)
   return encoded
 }
+
+
 
 export const calculateCurvePoints = (inputs: string[]) => {
   const [_, mean1, stdDev1, mean2, stdDev2, x] = inputsToNumbers(inputs)
