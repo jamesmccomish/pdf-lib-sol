@@ -11,7 +11,7 @@ export const calculatePdf = (inputs: string[]) => {
   const [_, mean, stdDev, x] = inputsToNumbers(inputs)
 
   const pdf = normalDistributionPDF(mean, stdDev, x)
-  const formattedPdf = parseEther(scientificToFixedPoint(pdf))
+  const formattedPdf = BigInt(scientificToFixedPoint(pdf))
 
   const encoded = encodeAbiParameters(
     parseAbiParameters('int256 x'),
@@ -84,6 +84,20 @@ export const calculateSecondDerivative = (inputs: string[]) => {
   return encoded
 }
 
+export const calculatePdfDifference = (inputs: string[]) => {
+  const [_, mean1, stdDev1, mean2, stdDev2, x] = inputsToNumbers(inputs)
+
+  const pdfDifference = normalDistributionPDF(mean1, stdDev1, x) - normalDistributionPDF(mean2, stdDev2, x)
+  const formattedPdfDifference = BigInt(scientificToFixedPoint(pdfDifference))
+
+  const encoded = encodeAbiParameters(
+    parseAbiParameters('int256 x'),
+    [formattedPdfDifference]
+  )
+  console.log(encoded)
+  return encoded
+}
+
 // ----------------------------------------------------------------------------------------------------
 // Helper functions
 // ----------------------------------------------------------------------------------------------------
@@ -93,7 +107,7 @@ function inputsToNumbers(inputs: string[]) {
 }
 
 function allObjectValuesToBigInt(obj: any): any {
-  if (typeof obj === 'number') return parseEther(scientificToFixedPoint(obj))
+  if (typeof obj === 'number') return BigInt(scientificToFixedPoint(obj))
 
   if (typeof obj !== 'object' || obj === null) return obj;
 
@@ -125,27 +139,21 @@ function encodePdfTestData(pdfTestData: any) {
  * eg. 3.6 -> "3600000000000000000" 
  */
 function scientificToFixedPoint(num: number): string {
-  // Convert to decimal string, keeping full precision
-  const str = num.toString();
+  // Convert to string, keeping full precision
+  let str = num.toString();
 
-  // Parse scientific notation if present
-  if (str.includes('e')) {
-    const [coefficient, exponent] = str.split('e').map(part => parseFloat(part || '0'));
-    const finalNum = coefficient * Math.pow(10, exponent || 0);
-    if (exponent < 0) {
-      // Add 18 to account for Solidity's fixed point representation
-      const adjustedNum = coefficient * Math.pow(10, (exponent + 18) || 0);
-      return Math.trunc(adjustedNum).toString();
-    }
-    // For very large numbers, just return the full decimal representation
-    const fullDecimal = finalNum.toLocaleString('fullwide', { useGrouping: false });
-    return fullDecimal;
+  // If no scientific notation, convert to scientific notation
+  if (!str.includes('e')) {
+    const n = num.toExponential()
+    str = n.toString()
   }
 
-  const [integerPart, decimalPart = ''] = str.split('.');
-  const paddedDecimal = (decimalPart + '000000000000000000').slice(0, 18);
-  const result = integerPart + paddedDecimal;
-  return result;
+  const [coefficient, exponent] = str.split('e').map(part => parseFloat(part || '0'));
+  if (exponent < 0) {
+    return Math.trunc(coefficient * 10 ** (18 + exponent)).toString()
+  } else {
+    return Math.trunc(coefficient * 10 ** exponent).toString()
+  }
 }
 
 // ----------------------------------------------------------------------------------------------------
@@ -166,7 +174,36 @@ function run(inputs) {
     case 'calculateSecondDerivative':
       calculateSecondDerivative(inputs)
       break
+    case 'calculatePdfDifference':
+      calculatePdfDifference(inputs)
+      break
   }
 }
 run(process.argv.slice(2))
 
+function test() {
+  const a = 123.456e-9
+  const b = 7878787878
+  const c = -2.0568613326757935e-17
+  const d = 4.2840997058421476e-10
+  const e = 6.6768356e14
+  const f = 0.12
+  const g = 9
+
+  const aFixed = scientificToFixedPoint(a)
+  const bFixed = scientificToFixedPoint(b)
+  const cFixed = scientificToFixedPoint(c)
+  const dFixed = scientificToFixedPoint(d)
+  const eFixed = scientificToFixedPoint(e)
+  const fFixed = scientificToFixedPoint(f)
+  const gFixed = scientificToFixedPoint(g)
+  console.log(aFixed, aFixed.length)
+  console.log(bFixed, bFixed.length)
+  console.log(cFixed, cFixed.length)
+  console.log(dFixed, dFixed.length)
+  console.log(eFixed, eFixed.length)
+  console.log(fFixed, fFixed.length)
+  console.log(gFixed, gFixed.length)
+}
+
+// test()

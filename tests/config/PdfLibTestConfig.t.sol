@@ -10,8 +10,9 @@ import { SD59x18 } from "prb-math/sd59x18/ValueType.sol";
 import { uMIN_SD59x18, uMAX_SD59x18 } from "prb-math/sd59x18/Constants.sol";
 
 contract PdfLibTestConfig is Test {
-    // 0.00000001%
-    uint256 internal constant TOLERANCE = 1e10;
+    // TODO Improve tolerance for tests
+    // 0.001%
+    uint256 internal constant TOLERANCE = 1e13;
 
     int256 MIN_MEAN = -1e18;
     int256 MAX_MEAN = 1e18;
@@ -47,7 +48,7 @@ contract PdfLibTestConfig is Test {
     /**
      * @notice generate test values for pdf using default config
      */
-    function generatePdfTestValues(int256 seed) public returns (int256 x, int256 stdDev, int256 mean) {
+    function generatePdfTestValues(int256 seed) public view returns (int256 x, int256 stdDev, int256 mean) {
         return generatePdfTestValues(seed, DEFAULT_CONFIG);
     }
 

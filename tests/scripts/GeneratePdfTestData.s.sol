@@ -99,4 +99,42 @@ contract GeneratePdfTestData is Test {
         int256 result = abi.decode(res, (int256));
         return result;
     }
+
+    function calculatePdfDifference(
+        int256 mean1,
+        int256 stdDev1,
+        int256 mean2,
+        int256 stdDev2,
+        int256 x
+    )
+        public
+        returns (int256)
+    {
+        string[] memory cmd = new string[](8);
+
+        cmd[0] = "bun";
+        cmd[1] = "tests/scripts/generate-pdf-reference-data.ts";
+        cmd[2] = "calculatePdfDifference";
+        cmd[3] = vm.toString(mean1);
+        cmd[4] = vm.toString(stdDev1);
+        cmd[5] = vm.toString(mean2);
+        cmd[6] = vm.toString(stdDev2);
+        cmd[7] = vm.toString(x);
+
+        string memory formatted = formatScriptRun(cmd);
+        console2.log(formatted);
+
+        bytes memory res = vm.ffi(cmd);
+        int256 result = abi.decode(res, (int256));
+        return result;
+    }
+
+    function formatScriptRun(string[] memory cmd) public pure returns (string memory formatted) {
+        for (uint256 i = 0; i < cmd.length; i++) {
+            formatted = string.concat(formatted, cmd[i]);
+            if (i < cmd.length - 1) {
+                formatted = string.concat(formatted, " ");
+            }
+        }
+    }
 }

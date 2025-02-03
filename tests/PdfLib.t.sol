@@ -27,111 +27,32 @@ contract PdfLibTest is PdfLibTestConfig, GeneratePdfTestData {
 
     PdfTestData internal testData;
 
-    function test_pdf_int256Wrapper(int256 seed) public {
-        //seed = 9_671_416_071_630_577_420_746_185_271_013;
+    function test_pdf(int256 seed) public {
         (int256 x, int256 mean, int256 stdDev) = generatePdfTestValues(seed);
-        // int256 x = 3;
-        // int256 stdDev = 1;
 
-        console2.log("x", x);
-        console2.log("mean", mean);
-        console2.log("stdDev", stdDev);
+        int256 p1 = PdfLib.pdf(x, mean, stdDev);
+        int256 p1Check = calculatePdf(mean, stdDev, x);
+        assertApproxEqRel(p1, p1Check, TOLERANCE, "p1 check");
 
-        int256 p = PdfLib.pdf(x, mean, stdDev);
-        console2.log("--- p", p);
-        int256 pCheck = calculatePdf(mean, stdDev, x);
-        console2.log("pCheck", pCheck);
-
-        mean = mean * 1e10;
-        x = x * 1e10;
-        stdDev = stdDev * 1e10;
-
-        console2.log("x", x);
-        console2.log("mean", mean);
-        console2.log("stdDev", stdDev);
+        int256 scale = 1e2;
+        mean = mean * scale;
+        x = x * scale;
+        stdDev = stdDev * scale;
 
         int256 p2 = PdfLib.pdf(x, mean, stdDev);
-        console2.log("--- p2", p2);
         int256 p2Check = calculatePdf(mean, stdDev, x);
-        console2.log("p2Check", p2Check);
+        assertApproxEqRel(p2, p2Check, TOLERANCE, "p2 check");
 
-        // assertApproxEqRel(p, pCheck, TOLERANCE);
+        assertApproxEqRel(p1, p2 * scale, TOLERANCE, "p1 p2 scaled");
+        assertApproxEqRel(p1Check, p2Check * scale, TOLERANCE, "p1Check p2Check scaled");
     }
 
-    function test_pdfScaledInputs() public { }
-
-    // function test_pdf_SD59x18(int256 seed) public {
-    //     (int256 x, int256 mean, int256 stdDev) = generatePdfTestValues(seed);
-
-    //     int256 p1 = PdfLib.pdf(convert(x), convert(mean), convert(stdDev)).unwrap();
-    //     int256 p1Check = calculatePdf(mean, stdDev, x);
-    //     assertApproxEqRel(p1, p1Check, TOLERANCE);
-
-    //     x = x * 10;
-    //     mean = mean * 10;
-    //     stdDev = stdDev * 10;
-
-    //     int256 p2 = PdfLib.pdf(convert(x), convert(mean), convert(stdDev)).unwrap();
-    //     int256 p2Check = calculatePdf(mean, stdDev, x);
-    //     assertApproxEqRel(p2, p2Check, TOLERANCE);
-    //     assertApproxEqRel(p1, p2 * 10, TOLERANCE);
-    //     assertApproxEqRel(p1Check, p2Check * 10, TOLERANCE);
-    // }
-
-    function test_pdfDerivitiveAtX(int256 seed) public {
-        (int256 x, int256 mean, int256 stdDev) = generatePdfTestValues(seed);
-
-        // Calculate the derivative and check against typescript pdf functions
-        int256 p1 = PdfLib.pdfDerivativeAtX(convert(x), convert(mean), convert(stdDev)).unwrap();
-        console2.log("p1", p1);
-        int256 p1Check = calculateDerivative(mean, stdDev, x);
-        console2.log("p1Check", p1Check);
-
-        // x on the other side of the mean
-        int256 x2 = mean + mean - x;
-        int256 p2 = PdfLib.pdfDerivativeAtX(convert(x2), convert(mean), convert(stdDev)).unwrap();
-        console2.log("p2", p2);
-        int256 p2Check = calculateDerivative(mean, stdDev, x2);
-        console2.log("p2Check", p2Check);
-
-        assertEq(p1, -p2);
-        assertEq(p1Check, -p2Check);
-        assertApproxEqRel(p1, p1Check, TOLERANCE);
-        assertApproxEqRel(p2, p2Check, TOLERANCE);
-    }
-
-    // TODO fix tolerance check
-    function test_pdfSecondDerivitiveAtX(int256 seed) public {
-        // Run with narrow range as second derivitive drops to 0 outside this
-        (int256 x, int256 mean, int256 stdDev) = generatePdfTestValues(seed, NARROW_RANGE_CONFIG);
-        // x = 1.05e5;
-        //  mean = 1.1e5;
-        //  stdDev = 1e4;
-
-        console2.log("x", x);
-        console2.log("stdDev", stdDev);
-        console2.log("mean", mean);
-        int256 p1 = PdfLib.pdfSecondDerivativeAtX(convert(x), convert(mean), convert(stdDev)).unwrap();
-        console2.log("p1 deriv", p1);
-        int256 p1Check = calculateSecondDerivative(mean, stdDev, x);
-        console2.log("p1Check", p1Check);
-
-        int256 x2 = mean + mean - x;
-        int256 p2 = PdfLib.pdfSecondDerivativeAtX(convert(x2), convert(mean), convert(stdDev)).unwrap();
-        console2.log("p2", p2);
-        int256 p2Check = calculateSecondDerivative(mean, stdDev, x2);
-        console2.log("p2Check", p2Check);
-
-        assertEq(p1, p2);
-        assertEq(p1Check, p2Check);
-        assertApproxEqRel(p1, p1Check, TOLERANCE);
-        assertApproxEqRel(p2, p2Check, TOLERANCE);
-    }
-
-    function test_isMinimumPoint_in256Wrapper(int256 seed1, int256 seed2) public {
+    function test_isMinimumPoint(int256 seed) public {
         // We just use this to generate the stdDevs, x is unused
-        (, int256 mean1, int256 stdDev1) = generatePdfTestValues(seed1, NARROW_RANGE_CONFIG);
-        (, int256 mean2, int256 stdDev2) = generatePdfTestValues(seed2, NARROW_RANGE_CONFIG);
+        (, int256 mean1, int256 stdDev1) = generatePdfTestValues(seed, NARROW_RANGE_CONFIG);
+
+        int256 mean2 = mean1 + (mean1 * (seed % 20)) / 100;
+        int256 stdDev2 = stdDev1 + (stdDev1 * (seed % 20)) / 100;
 
         // Use ts to calculate the minimum point, and take x from that
         PdfTestData memory pdfData = calculateCurvePoints(mean1, stdDev1, mean2, stdDev2, 0);
@@ -142,26 +63,71 @@ contract PdfLibTest is PdfLibTestConfig, GeneratePdfTestData {
         assertEq(isMinimum, true);
     }
 
-    // function test_isMinimumPoint_SD59x18(int256 mean1, int256 mean2, int256 seed) public {
-    //     // Means should be within 50% of each other
-    //     vm.assume(mean1 >= 0 && mean2 >= 0 && mean1 <= type(int256).max / 2 && mean2 <= type(int256).max / 2);
-    //     vm.assume(mean1 > mean2 - mean1 / 2 && mean1 < mean2 + mean1 / 2);
+    function test_pdfDifference(int256 seed) public {
+        (int256 x, int256 mean1, int256 stdDev1) = generatePdfTestValues(seed);
 
-    //     // We just use this to generate the stdDevs, x is unused
-    //     (, int256 stdDev1) = generatePdfTestValues(mean1, seed);
-    //     (, int256 stdDev2) = generatePdfTestValues(mean2, seed);
+        int256 mean2 = mean1 + (mean1 * (seed % 20)) / 100;
+        int256 stdDev2 = stdDev1 + (stdDev1 * (seed % 20)) / 100;
 
-    //     // Use ts to calculate the minimum point, and take x from that
-    //     MarketData memory testMarketData = calculateCurvePoints(mean1, stdDev1, mean2, stdDev2, 0, scale);
+        int256 diff = PdfLib.pdfDifference(
+            convert(x), convert(mean1), convert(stdDev1), convert(mean2), convert(stdDev2)
+        ).unwrap();
+        int256 diffCheck = calculatePdfDifference(mean1, stdDev1, mean2, stdDev2, x);
 
-    //     bool isMinimum = PdfLib.isMinimumPoint(
-    //         scale_SD59x18,
-    //         wrap(testMarketData.differenceExtrema.min.x),
-    //         convert(mean1),
-    //         convert(stdDev1),
-    //         convert(mean2),
-    //         convert(stdDev2)
-    //     );
-    //     assertEq(isMinimum, true);
-    // }
+        assertApproxEqRel(diff, diffCheck, TOLERANCE);
+    }
+
+    function test_pdfDerivitiveAtX(int256 seed) public {
+        (int256 x, int256 mean, int256 stdDev) = generatePdfTestValues(seed);
+
+        // Calculate the derivative and check against typescript pdf functions
+        int256 p1 = PdfLib.pdfDerivativeAtX(convert(x), convert(mean), convert(stdDev)).unwrap();
+        int256 p1Check = calculateDerivative(mean, stdDev, x);
+
+        // x on the other side of the mean
+        int256 x2 = mean + mean - x;
+        int256 p2 = PdfLib.pdfDerivativeAtX(convert(x2), convert(mean), convert(stdDev)).unwrap();
+        int256 p2Check = calculateDerivative(mean, stdDev, x2);
+
+        assertEq(p1, -p2);
+        assertEq(p1Check, -p2Check);
+        assertApproxEqRel(p1, p1Check, TOLERANCE);
+        assertApproxEqRel(p2, p2Check, TOLERANCE);
+    }
+
+    function test_pdfSecondDerivitiveAtX(int256 seed) public {
+        // Run with narrow range as second derivitive drops to 0 outside this
+        (int256 x, int256 mean, int256 stdDev) = generatePdfTestValues(seed, NARROW_RANGE_CONFIG);
+
+        int256 p1 = PdfLib.pdfSecondDerivativeAtX(convert(x), convert(mean), convert(stdDev)).unwrap();
+        int256 p1Check = calculateSecondDerivative(mean, stdDev, x);
+
+        int256 x2 = mean + mean - x;
+        int256 p2 = PdfLib.pdfSecondDerivativeAtX(convert(x2), convert(mean), convert(stdDev)).unwrap();
+        int256 p2Check = calculateSecondDerivative(mean, stdDev, x2);
+
+        assertEq(p1, p2);
+        assertEq(p1Check, p2Check);
+        assertApproxEqRel(p1, p1Check, TOLERANCE);
+        assertApproxEqRel(p2, p2Check, TOLERANCE);
+    }
+
+    function test_pdf_SD59x18(int256 seed) public {
+        (int256 x, int256 mean, int256 stdDev) = generatePdfTestValues(seed);
+
+        int256 p1 = PdfLib.pdf(convert(x), convert(mean), convert(stdDev)).unwrap();
+        int256 p1Check = calculatePdf(mean, stdDev, x);
+        assertApproxEqRel(p1, p1Check, TOLERANCE, "p1 check");
+
+        x = x * 10;
+        mean = mean * 10;
+        stdDev = stdDev * 10;
+
+        int256 p2 = PdfLib.pdf(convert(x), convert(mean), convert(stdDev)).unwrap();
+        int256 p2Check = calculatePdf(mean, stdDev, x);
+        assertApproxEqRel(p2, p2Check, TOLERANCE, "p2 check");
+
+        assertApproxEqRel(p1, p2 * 10, TOLERANCE, "p1 p2 scaled ");
+        assertApproxEqRel(p1Check, p2Check * 10, TOLERANCE, "p1Check p2Check scaled");
+    }
 }
