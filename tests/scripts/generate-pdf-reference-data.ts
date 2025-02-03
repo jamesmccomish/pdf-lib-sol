@@ -18,7 +18,6 @@ export const calculatePdf = (inputs: string[]) => {
     [formattedPdf]
   )
   console.log(encoded)
-
   return encoded
 }
 
@@ -29,14 +28,12 @@ export const calculateCurvePoints = (inputs: string[]) => {
     mean: mean1,
     stdDev: stdDev1,
   };
-
   const curve2 = {
     mean: mean2,
     stdDev: stdDev2,
   };
 
   const differenceExtrema = calculateDifferenceExtrema(curve1, curve2);
-
   const pdfTestData = {
     curve1,
     curve2,
@@ -46,7 +43,6 @@ export const calculateCurvePoints = (inputs: string[]) => {
 
   const encoded = encodePdfTestData(allObjectValuesToBigInt(pdfTestData))
   console.log(encoded)
-
   return encoded;
 }
 
@@ -59,16 +55,12 @@ export const calculateDerivative = (inputs: string[]) => {
   }
 
   const derivativeAtX = pdfDerivative(curve)(x)
-  // console.log(derivativeAtX)
-
   const formattedDerivative = BigInt(scientificToFixedPoint(derivativeAtX))
-  //console.log(parsedToEther)
 
   const encoded = encodeAbiParameters(
     parseAbiParameters('int256 x'),
     [formattedDerivative]
   )
-
   console.log(encoded)
   return encoded
 }
@@ -82,7 +74,6 @@ export const calculateSecondDerivative = (inputs: string[]) => {
   }
 
   const secondDerivativeAtX = pdfSecondDerivative(curve)(x)
-
   const formattedSecondDerivative = BigInt(scientificToFixedPoint(secondDerivativeAtX))
 
   const encoded = encodeAbiParameters(
@@ -134,16 +125,27 @@ function encodePdfTestData(pdfTestData: any) {
  * eg. 3.6 -> "3600000000000000000" 
  */
 function scientificToFixedPoint(num: number): string {
-  //console.log('num', num)
   // Convert to decimal string, keeping full precision
   const str = num.toString();
-  //console.log('Decimal string:', str)
 
   // Parse scientific notation if present
-  const [coefficient, exponent] = str.split('e').map(part => parseFloat(part || '0'));
-  const finalNum = coefficient * Math.pow(10, exponent || 0);
-  // console.log('Parsed number:', finalNum)
-  return finalNum.toString()
+  if (str.includes('e')) {
+    const [coefficient, exponent] = str.split('e').map(part => parseFloat(part || '0'));
+    const finalNum = coefficient * Math.pow(10, exponent || 0);
+    if (exponent < 0) {
+      // Add 18 to account for Solidity's fixed point representation
+      const adjustedNum = coefficient * Math.pow(10, (exponent + 18) || 0);
+      return Math.trunc(adjustedNum).toString();
+    }
+    // For very large numbers, just return the full decimal representation
+    const fullDecimal = finalNum.toLocaleString('fullwide', { useGrouping: false });
+    return fullDecimal;
+  }
+
+  const [integerPart, decimalPart = ''] = str.split('.');
+  const paddedDecimal = (decimalPart + '000000000000000000').slice(0, 18);
+  const result = integerPart + paddedDecimal;
+  return result;
 }
 
 // ----------------------------------------------------------------------------------------------------

@@ -124,8 +124,8 @@ contract PdfLibTest is PdfLibTestConfig, GeneratePdfTestData {
 
         assertEq(p1, p2);
         assertEq(p1Check, p2Check);
-        // assertApproxEqRel(p1, p1Check, TOLERANCE);
-        // assertApproxEqRel(p2, p2Check, TOLERANCE);
+        assertApproxEqRel(p1, p1Check, TOLERANCE);
+        assertApproxEqRel(p2, p2Check, TOLERANCE);
     }
 
     function test_isMinimumPoint_in256Wrapper(int256 seed1, int256 seed2) public {
